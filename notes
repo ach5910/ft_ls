@@ -1,13 +1,219 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    notes                                              :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: ahunt <marvin@42.fr>                       +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2016/12/20 14:58:15 by ahunt             #+#    #+#              #
-#    Updated: 2016/12/20 14:58:18 by ahunt            ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+
+DIR *opendir(const char *name);
+
+The opendir() function opens a directory stream corresponding to the directory name, and returns a pointer 
+to the directory stream. The stream is positioned at the first entry in the directory.
 
 
+readdir, readdir_r - read a directory
+#include <dirent.h>
+
+struct dirent *readdir(DIR *dirp);
+
+The readdir() function returns a pointer to a dirent structure representing the next directory entry in the directory stream pointed to by dirp. It returns NULL on reaching the end of the directory stream or if an error occurred.
+
+On Linux, the dirent structure is defined as follows:
+
+struct dirent {
+    ino_t          d_ino;       /* inode number */
+    off_t          d_off;       /* offset to the next dirent */
+    unsigned short d_reclen;    /* length of this record */
+    unsigned char  d_type;      /* type of file; not supported
+                                   by all file system types */
+    char           d_name[256]; /* filename */
+};
+
+
+#include <sys/types.h>
+#include <dirent.h>
+int closedir(DIR *dirp);
+
+The closedir() function closes the directory stream associated with dirp. A successful call to closedir() also closes the underlying file descriptor associated with dirp. The directory stream descriptor dirp is not available after this call.
+
+
+
+
+stat, fstat, lstat - get file status
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+int stat(const char *path, struct stat *buf);
+int fstat(int fd, struct stat *buf);
+int lstat(const char *path, struct stat *buf);
+
+These functions return information about a file. No permissions are required on the file itself, but-in the case of stat() and lstat() - execute (search) permission is required on all of the directories in path that lead to the file.
+
+stat() stats the file pointed to by path and fills in buf.
+
+lstat() is identical to stat(), except that if path is a symbolic link, then the link itself is stat-ed, not the file that it refers to.
+
+fstat() is identical to stat(), except that the file to be stat-ed is specified by the file descriptor fd.
+
+All of these system calls return a stat structure, which contains the following fields:
+
+struct stat {
+    dev_t     st_dev;     /* ID of device containing file */
+    ino_t     st_ino;     /* inode number */
+    mode_t    st_mode;    /* protection */
+    nlink_t   st_nlink;   /* number of hard links */
+    uid_t     st_uid;     /* user ID of owner */
+    gid_t     st_gid;     /* group ID of owner */
+    dev_t     st_rdev;    /* device ID (if special file) */
+    off_t     st_size;    /* total size, in bytes */
+    blksize_t st_blksize; /* blocksize for file system I/O */
+    blkcnt_t  st_blocks;  /* number of 512B blocks allocated */
+    time_t    st_atime;   /* time of last access */
+    time_t    st_mtime;   /* time of last modification */
+    time_t    st_ctime;   /* time of last status change */
+};
+
+
+getpwnam, getpwnam_r, getpwuid, getpwuid_r - get password file entry
+#include <sys/types.h>
+#include <pwd.h>
+
+struct passwd *getpwnam(const char *name);
+
+struct passwd *getpwuid(uid_t uid);
+
+int getpwnam_r(const char *name, struct passwd *pwd,
+            char *buf, size_t buflen, struct passwd **result);
+
+int getpwuid_r(uid_t uid, struct passwd *pwd,
+            char *buf, size_t buflen, struct passwd **result);
+
+
+
+The getpwnam() function returns a pointer to a structure containing the broken-out fields of the record in the password database (e.g., the local password file /etc/passwd, NIS, and LDAP) that matches the username name.
+
+The getpwuid() function returns a pointer to a structure containing the broken-out fields of the record in the password database that matches the user ID uid.
+
+The passwd structure is defined in <pwd.h> as follows:
+
+struct passwd {
+    char   *pw_name;       /* username */
+    char   *pw_passwd;     /* user password */
+    uid_t   pw_uid;        /* user ID */
+    gid_t   pw_gid;        /* group ID */
+    char   *pw_gecos;      /* user information */
+    char   *pw_dir;        /* home directory */
+    char   *pw_shell;      /* shell program */
+};
+
+
+
+
+listxattr, llistxattr, flistxattr - list extended attribute names
+ #include <sys/types.h>
+ #include <sys/xattr.h>
+
+       ssize_t listxattr(const char *path, char *list, size_t size);
+       ssize_t llistxattr(const char *path, char *list, size_t size);
+       ssize_t flistxattr(int fd, char *list, size_t size);
+
+       Extended attributes are name:value pairs associated with inodes
+       (files, directories, symbolic links, etc.).  They are extensions to
+       the normal attributes which are associated with all inodes in the
+       system (i.e., the stat(2) data).  A complete overview of extended
+       attributes concepts can be found in xattr(7).
+
+       listxattr() retrieves the list of extended attribute names associated
+       with the given path in the filesystem.  The retrieved list is placed
+       in list, a caller-allocated buffer whose size (in bytes) is specified
+       in the argument size.  The list is the set of (null-terminated)
+       names, one after the other.  Names of extended attributes to which
+       the calling process does not have access may be omitted from the
+       list.  The length of the attribute name list is returned.
+
+       llistxattr() is identical to listxattr(), except in the case of a
+       symbolic link, where the list of names of extended attributes
+       associated with the link itself is retrieved, not the file that it
+       refers to.
+
+       flistxattr() is identical to listxattr(), only the open file referred
+       to by fd (as returned by open(2)) is interrogated in place of path.
+
+       A single extended attribute name is a null-terminated string.  The
+       name includes a namespace prefix; there may be several, disjoint
+       namespaces associated with an individual inode.
+
+       If size is specified as zero, these calls return the current size of
+       the list of extended attribute names (and leave list unchanged).
+       This can be used to determine the size of the buffer that should be
+       supplied in a subsequent call.  (But, bear in mind that there is a
+       possibility that the set of extended attributes may change between
+       the two calls, so that it is still necessary to check the return
+       status from the second call.)
+
+
+getxattr, lgetxattr, fgetxattr - retrieve an extended attribute value
+#include <sys/types.h>
+       #include <sys/xattr.h>
+
+       ssize_t getxattr(const char *path, const char *name,
+                        void *value, size_t size);
+       ssize_t lgetxattr(const char *path, const char *name,
+                        void *value, size_t size);
+       ssize_t fgetxattr(int fd, const char *name,
+                        void *value, size_t size);
+DESCRIPTION         top
+
+       Extended attributes are name:value pairs associated with inodes
+       (files, directories, symbolic links, etc.).  They are extensions to
+       the normal attributes which are associated with all inodes in the
+       system (i.e., the stat(2) data).  A complete overview of extended
+       attributes concepts can be found in xattr(7).
+
+       getxattr() retrieves the value of the extended attribute identified
+       by name and associated with the given path in the filesystem.  The
+       attribute value is placed in the buffer pointed to by value; size
+       specifies the size of that buffer.  The return value of the call is
+       the number of bytes placed in value.
+
+
+
+time - get time in seconds
+#include <time.h>
+time_t time(time_t *t);
+
+Description
+
+time() returns the time as the number of seconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC).
+If t is non-NULL, the return value is also stored in the memory pointed to by t.
+
+Return Value
+
+
+ On success, the value of time in seconds since the Epoch is returned. On error, ((time_t) -1) is returned, and errno is set appropriately.
+
+
+asctime, ctime, gmtime, localtime, mktime, asctime_r, ctime_r, gmtime_r, localtime_r - transform date and time to broken-down time or ASCII
+
+char *ctime(const time_t *timep);
+The ctime(), gmtime() and localtime() functions all take an argument of data type time_t which represents calendar time. When interpreted as an absolute time value, it represents the number of seconds elapsed since the Epoch, 1970-01-01 00:00:00 +0000 (UTC).
+
+The asctime() and mktime() functions both take an argument representing broken-down time which is a representation separated into year, month, day, and so on.
+
+Broken-down time is stored in the structure tm which is defined in <time.h> as follows:
+
+struct tm {
+    int tm_sec;         /* seconds */
+    int tm_min;         /* minutes */
+    int tm_hour;        /* hours */
+    int tm_mday;        /* day of the month */
+    int tm_mon;         /* month */
+    int tm_year;        /* year */
+    int tm_wday;        /* day of the week */
+    int tm_yday;        /* day in the year */
+    int tm_isdst;       /* daylight saving time */
+};
+
+
+readlink - read value of a symbolic link
+
+
+#include <unistd.h>
+
+ssize_t readlink(const char *path, char *buf, size_t bufsiz);
+readlink() places the contents of the symbolic link path in the buffer buf, which has size bufsiz. readlink() does not append a null byte to buf. It will truncate the contents (to a length of bufsiz characters), in case the buffer is too small to hold all of the contents.
