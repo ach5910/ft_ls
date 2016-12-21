@@ -182,7 +182,7 @@ void	ft_putdirlong(t_list *list, t_datafmt *fmt)
 	char 	*tm;
 
 	ft_get_max_lengths(list, fmt);
-	printf("total %ld\n", fmt->blocks);
+fvc	printf("total %ld\n", fmt->blocks);
 	while (list)
 	{
 		dr = list->content;
